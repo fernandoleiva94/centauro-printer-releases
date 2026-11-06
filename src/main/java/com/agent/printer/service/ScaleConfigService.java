@@ -1,10 +1,10 @@
 package com.agent.printer.service;
 
+import com.agent.printer.config.AgentPaths;
 import com.agent.printer.model.ScaleConfig;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -18,10 +18,10 @@ public class ScaleConfigService {
 
     private final ObjectMapper mapper;
 
-    @Value("${scale.config.file:C:/dist/centauro-pos-config/scale-configs.json}")
-    private String scaleConfigFile;
+    private final AgentPaths paths;
 
-    public ScaleConfigService() {
+    public ScaleConfigService(AgentPaths paths) {
+        this.paths = paths;
         this.mapper = new ObjectMapper();
         this.mapper.enable(SerializationFeature.INDENT_OUTPUT);
     }
@@ -31,7 +31,7 @@ public class ScaleConfigService {
     // -------------------------------------------------------------------------
 
     public List<ScaleConfig> findAll() throws IOException {
-        Path path = Path.of(scaleConfigFile);
+        Path path = paths.scaleConfigFile();
         if (!Files.exists(path)) {
             return new ArrayList<>();
         }
@@ -87,7 +87,7 @@ public class ScaleConfigService {
     // -------------------------------------------------------------------------
 
     private void persist(List<ScaleConfig> configs) throws IOException {
-        Path path = Path.of(scaleConfigFile);
+        Path path = paths.scaleConfigFile();
         if (path.getParent() != null) {
             Files.createDirectories(path.getParent());
         }

@@ -1,7 +1,7 @@
 package com.agent.printer.service;
 
+import com.agent.printer.config.AgentPaths;
 import com.agent.printer.model.ConfigUpdateRequest;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -17,11 +17,14 @@ import java.util.Map;
 @Service
 public class ExternalConfigService {
 
-    @Value("${external.config.file:C:/centauro-pos-config/centauro-pos-config.properties}")
-    private String externalConfigFile;
+    private final AgentPaths paths;
+
+    public ExternalConfigService(AgentPaths paths) {
+        this.paths = paths;
+    }
 
     public Map<String, String> loadConfig() throws IOException {
-        Path path = Path.of(externalConfigFile);
+        Path path = paths.configFile();
         if (!Files.exists(path) || !Files.isRegularFile(path)) {
             throw new FileNotFoundException("No se encontro el archivo de configuracion: " + path);
         }
@@ -54,7 +57,7 @@ public class ExternalConfigService {
     }
 
     public Map<String, String> saveConfig(ConfigUpdateRequest request) throws IOException {
-        Path path = Path.of(externalConfigFile);
+        Path path = paths.configFile();
 
         // Si el directorio no existe, lo crea
         if (path.getParent() != null) {
