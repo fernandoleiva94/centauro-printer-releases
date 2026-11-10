@@ -22,4 +22,7 @@ que ya tengas instaladas en el equipo.
 | `CentauroPrinter-Setup.exe.sha256` | hash SHA-256 para verificar la descarga |
 | `latest.json` | `version`, `url` y `sha256` de la última versión |
 
-Este repositorio solo contiene binarios publicados. El código vive en un repositorio privado.
+## Desarrollo
+
+Este repositorio contiene el código del agente (Java 21 + Spring Boot) y publica los instaladores como
+Releases. Ver `AGENTS.md` para la arquitectura, el empaquetado y cómo sacar una versión.

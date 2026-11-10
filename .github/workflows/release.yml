@@ -1,0 +1,63 @@
+name: release
+
+# Al pushear un tag vX.Y.Z arma el instalador de Windows y lo publica como Release de este mismo repo.
+# No necesita secrets: usa el GITHUB_TOKEN del workflow.
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: write
+
+jobs:
+  windows-installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Instalar Inno Setup
+        shell: pwsh
+        run: choco install innosetup -y --no-progress
+
+      - name: Versión desde el tag
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Tests
+        shell: pwsh
+        run: ./mvnw.cmd -B test "-Drevision=$env:VERSION"
+
+      - name: Armar instalador
+        shell: pwsh
+        run: ./packaging/build-installer.ps1 -Version $env:VERSION -SkipTests
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CentauroPrinter-${{ env.VERSION }}
+          path: build/installer/out/*
+
+      - name: Publicar release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $out = "build/installer/out"
+          gh release create "v$env:VERSION" `
+            "$out/CentauroPrinter-Setup.exe" `
+            "$out/CentauroPrinter-Setup.exe.sha256" `
+            "$out/latest.json" `
+            --repo "${{ github.repository }}" `
+            --title "Centauro Printer $env:VERSION" `
+            --notes "Instalador de Windows (sin firma de código todavía). SHA-256 en CentauroPrinter-Setup.exe.sha256." `
+            --latest
+          if ($LASTEXITCODE -ne 0) { throw "gh release create falló" }
