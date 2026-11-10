@@ -35,7 +35,10 @@ Artefacto `com.agent:printer`, paquete `com.agent.printer`.
   (DNS rebinding) y un `Origin` que no esté en `allowed.origins`.
 - `allowed.origins` (`ALLOWED_ORIGINS`, separados por coma, admite `https://*.dominio.com`).
   `ALLOWED_ORIGIN` (singular) sigue funcionando por compatibilidad.
-  El default incluye `https://*.netlify.app`: ajustarlo cuando el dominio del front sea definitivo.
+  El default incluye `centauropos.com` (el front de producción es `https://app.centauropos.com`),
+  `centauropos.com.ar` y `https://*.netlify.app`: ajustarlo cuando el dominio del front sea definitivo.
+  Si el front se publica en otro dominio y no está en la lista, el agente lo rechaza con 403 y el
+  navegador lo ve como "no detectado".
 - `PRINT_TOKEN` es opcional y solo protege `/print/**`. `VITE_PRINT_TOKEN` queda en el bundle
   público: no es un secreto.
 
