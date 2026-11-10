@@ -1,21 +1,35 @@
 name: release
 
 # Al pushear un tag vX.Y.Z arma el instalador de Windows y lo publica como Release de este mismo repo.
-# No necesita secrets: usa el GITHUB_TOKEN del workflow.
+# También se puede lanzar a mano (Actions > release > Run workflow) indicando un tag existente:
+# sirve para reintentar un release que falló. No necesita secrets: usa el GITHUB_TOKEN.
+#
+# Si el Release del tag ya existe (por ejemplo, creado desde la web), sube los archivos
+# sobre ese mismo Release en lugar de fallar.
 
 on:
   push:
     tags:
       - "v[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag existente a publicar (vX.Y.Z)"
+        required: true
 
 permissions:
   contents: write
+
+env:
+  TAG: ${{ inputs.tag || github.ref_name }}
 
 jobs:
   windows-installer:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
 
       - uses: actions/setup-java@v4
         with:
@@ -30,7 +44,8 @@ jobs:
       - name: Versión desde el tag
         shell: pwsh
         run: |
-          $version = "${{ github.ref_name }}".TrimStart("v")
+          if ($env:TAG -notmatch '^v\d+\.\d+\.\d+$') { throw "Tag inválido: $env:TAG (esperado vX.Y.Z)" }
+          $version = $env:TAG.TrimStart("v")
           "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Tests
@@ -50,14 +65,26 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
         run: |
+          $ErrorActionPreference = "Continue"
           $out = "build/installer/out"
-          gh release create "v$env:VERSION" `
-            "$out/CentauroPrinter-Setup.exe" `
-            "$out/CentauroPrinter-Setup.exe.sha256" `
-            "$out/latest.json" `
-            --repo "${{ github.repository }}" `
-            --title "Centauro Printer $env:VERSION" `
-            --notes "Instalador de Windows (sin firma de código todavía). SHA-256 en CentauroPrinter-Setup.exe.sha256." `
-            --latest
-          if ($LASTEXITCODE -ne 0) { throw "gh release create falló" }
+          $files = @(
+            "$out/CentauroPrinter-Setup.exe",
+            "$out/CentauroPrinter-Setup.exe.sha256",
+            "$out/latest.json"
+          )
+          $title = "Centauro Printer $env:VERSION"
+          $notes = "Instalador de Windows (sin firma de código todavía). SHA-256 en CentauroPrinter-Setup.exe.sha256."
+
+          gh release view $env:TAG --repo $env:REPO *> $null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "El Release $env:TAG ya existe: se suben los archivos sobre ese Release."
+            gh release upload $env:TAG @files --clobber --repo $env:REPO
+            if ($LASTEXITCODE -ne 0) { throw "gh release upload falló" }
+            gh release edit $env:TAG --title $title --notes $notes --draft=false --latest --repo $env:REPO
+            if ($LASTEXITCODE -ne 0) { throw "gh release edit falló" }
+          } else {
+            gh release create $env:TAG @files --title $title --notes $notes --latest --repo $env:REPO
+            if ($LASTEXITCODE -ne 0) { throw "gh release create falló" }
+          }
