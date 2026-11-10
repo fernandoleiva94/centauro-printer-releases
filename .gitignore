@@ -1,0 +1,6 @@
+# Solo se publican releases: ningún binario ni código va al árbol del repo.
+*.exe
+*.msi
+*.zip
+*.jar
+*.sha256
