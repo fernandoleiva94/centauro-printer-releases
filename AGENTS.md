@@ -66,8 +66,10 @@ Instalador `CentauroPrinter-Setup.exe`, por usuario (sin admin), con JRE mínimo
   **No cambiar el `AppId`**: permite actualizar sobre una instalación existente.
   La desinstalación no borra `%LOCALAPPDATA%\CentauroPrinter` (config y logs).
 - La versión sale de `-Drevision` (pom: `${revision}`); el jar se llama siempre `printer.jar`.
-- Release: pushear un tag `vX.Y.Z` dispara `.github/workflows/release.yml`, que publica en el
-  repo público `fernandoleiva94/centauro-printer-releases` (secret `RELEASES_REPO_TOKEN`).
+- Release: pushear un tag `vX.Y.Z` dispara `.github/workflows/release.yml`, que publica el
+  Release en este mismo repo (público, `fernandoleiva94/centauro-printer-releases`) con el
+  `GITHUB_TOKEN` del workflow; no hace falta ningún secret. Como el repo es público, el código
+  también lo es: no commitear credenciales ni datos de clientes.
   URL estable: `https://github.com/fernandoleiva94/centauro-printer-releases/releases/latest/download/CentauroPrinter-Setup.exe`
   (y `latest.json` en la misma ruta, con `version`, `url` y `sha256`).
 - Sin firma de código por ahora: SmartScreen y Chrome muestran advertencia.

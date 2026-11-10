@@ -1,18 +1,15 @@
 name: release
 
-# Al pushear un tag vX.Y.Z arma el instalador de Windows y lo publica como Release en el repo
-# público de binarios (fernandoleiva94/centauro-printer-releases).
-#
-# Requiere el secret RELEASES_REPO_TOKEN: token fine-grained con permiso
-# "Contents: Read and write" solo sobre centauro-printer-releases.
+# Al pushear un tag vX.Y.Z arma el instalador de Windows y lo publica como Release de este mismo repo.
+# No necesita secrets: usa el GITHUB_TOKEN del workflow.
 
 on:
   push:
     tags:
       - "v[0-9]+.[0-9]+.[0-9]+"
 
-env:
-  RELEASES_REPO: fernandoleiva94/centauro-printer-releases
+permissions:
+  contents: write
 
 jobs:
   windows-installer:
@@ -52,15 +49,14 @@ jobs:
       - name: Publicar release
         shell: pwsh
         env:
-          GH_TOKEN: ${{ secrets.RELEASES_REPO_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          if (-not $env:GH_TOKEN) { throw "Falta el secret RELEASES_REPO_TOKEN" }
           $out = "build/installer/out"
           gh release create "v$env:VERSION" `
             "$out/CentauroPrinter-Setup.exe" `
             "$out/CentauroPrinter-Setup.exe.sha256" `
             "$out/latest.json" `
-            --repo $env:RELEASES_REPO `
+            --repo "${{ github.repository }}" `
             --title "Centauro Printer $env:VERSION" `
             --notes "Instalador de Windows (sin firma de código todavía). SHA-256 en CentauroPrinter-Setup.exe.sha256." `
             --latest
