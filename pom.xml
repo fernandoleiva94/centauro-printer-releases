@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.agent</groupId>
 	<artifactId>printer</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>${revision}</version>
 	<name>printer</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
@@ -28,6 +28,8 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<!-- La versión real la pasa el release: mvnw package -Drevision=1.2.3 -->
+		<revision>0.1.0-SNAPSHOT</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 	</properties>
@@ -59,6 +61,7 @@
 	</dependencies>
 
 	<build>
+		<finalName>printer</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

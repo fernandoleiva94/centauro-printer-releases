@@ -54,9 +54,26 @@ sin error (ya hay otra instancia).
 
 ## Distribución
 
-Los `.bat` y `.md` de NSSM/servicio son el mecanismo anterior y están por reemplazarse por un
-instalador por usuario (jlink + jpackage + Inno Setup, autostart HKCU, releases en GitHub).
-No agregar nada nuevo sobre NSSM.
+Instalador `CentauroPrinter-Setup.exe`, por usuario (sin admin), con JRE mínimo embebido.
+
+- `packaging/build-installer.ps1 -Version X.Y.Z`: Maven → jdeps/jlink (JRE mínimo) →
+  jpackage (app-image sin consola, `-Xmx128m -XX:+UseSerialGC`) → Inno Setup. Deja todo en
+  `build/installer/out/` (`CentauroPrinter-Setup.exe`, `.sha256`, `latest.json`).
+  Requiere JDK 21 e Inno Setup 6 (`winget install JRSoftware.InnoSetup`).
+- `packaging/CentauroPrinter.iss`: instala en `%LOCALAPPDATA%\Programs\CentauroPrinter`, registra
+  el arranque en `HKCU\...\Run`, cierra el agente antes de reemplazar archivos y lo vuelve a
+  lanzar al terminar (también con `/VERYSILENT`, que es lo que usará el auto-update).
+  **No cambiar el `AppId`**: permite actualizar sobre una instalación existente.
+  La desinstalación no borra `%LOCALAPPDATA%\CentauroPrinter` (config y logs).
+- La versión sale de `-Drevision` (pom: `${revision}`); el jar se llama siempre `printer.jar`.
+- Release: pushear un tag `vX.Y.Z` dispara `.github/workflows/release.yml`, que publica en el
+  repo público `fernandoleiva94/centauro-printer-releases` (secret `RELEASES_REPO_TOKEN`).
+  URL estable: `https://github.com/fernandoleiva94/centauro-printer-releases/releases/latest/download/CentauroPrinter-Setup.exe`
+  (y `latest.json` en la misma ruta, con `version`, `url` y `sha256`).
+- Sin firma de código por ahora: SmartScreen y Chrome muestran advertencia.
+
+Los `.bat` y `.md` de NSSM/servicio son el mecanismo anterior y se eliminan cuando el instalador
+esté validado en el piloto. No agregar nada nuevo sobre NSSM.
 
 ## Validación
 
